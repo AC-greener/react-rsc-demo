@@ -1,19 +1,18 @@
 require("@babel/register")({
-  presets: ["@babel/preset-env", "@babel/preset-react"]
+  presets: ["@babel/preset-env", "@babel/preset-react"],
 });
 
 // server.js
 import express from "express";
 import React from "react";
+import path from "path";
 import { renderToPipeableStream } from "react-dom/server";
 import App from "./App.jsx";
 
 const app = express();
 
-app.use(express.static("build"));
-
+app.use(express.static(path.join(__dirname, "client/dist/assets")));
 app.get("/", async (req, res) => {
-  // Define the starting HTML structure
   const htmlStart = `
     <!DOCTYPE html>
     <html lang="en">
@@ -26,20 +25,38 @@ app.get("/", async (req, res) => {
         <div id="root">
   `;
 
-  // Write the starting HTML to the response
+  const htmlEnd = `
+        </div>
+        <!-- 这里是打包过的js文件 -->
+        <script type="module" src="/main.js"></script>
+      </body>
+    </html>
+  `;
+
+  // 将起始的HTML写入响应
   res.write(htmlStart);
 
-  // Call renderToPipeableStream with the React App component
-  // and an options object to handle shell readiness
+  // 调用renderToPipeableStream，传入React App组件
+  // 和一个选项对象以处理shell的准备情况
   const { pipe } = renderToPipeableStream(<App />, {
     onShellReady: () => {
-      // Pipe the rendered output to the response when the shell is ready
+      // 当shell准备就绪时，将渲染的输出流传输到响应
+      res.setHeader("Content-Type", "text/html");
       pipe(res);
     },
+    onAllReady: () => {
+      // 当所有内容准备就绪时，将结束的HTML写入响应
+      res.write(htmlEnd);
+      res.end();
+    },
+    onError: (error) => {
+      // 处理错误情况
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+    }
   });
 });
 
-// Start the server on port 3000 and log a message to the console
 app.listen(3000, () => {
   console.log("Server is listening on port 3000");
 });
