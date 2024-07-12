@@ -7,9 +7,7 @@ import React from "react";
 import path from "path";    
 import ReactDOMServer from "react-dom/server";
 
-
 const app = express();
-
 app.use(express.static(path.join(__dirname, "client/dist/assets")));
 console.log(path.join(__dirname, "static"));
 app.get("*", (req, res) => {
@@ -24,8 +22,8 @@ app.get("*", (req, res) => {
       <body>
         <!-- Injecting the rendered App component -->
         <div id="root">${html}</div>
-        <!-- Linking to the main JavaScript bundle -->
-        <script type="module" src="/main.js"></script> <!-- Corrected path to the main.js -->
+        <!-- 这里是打包过的js文件 -->
+        <script type="module" src="/main.js"></script>
       </body>
     </html>
   `);
